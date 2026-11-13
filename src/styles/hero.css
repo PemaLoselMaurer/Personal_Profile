@@ -26,11 +26,12 @@
    dark sky, leaving the fireworks clear on the right. */
 @media (min-width: 901px) {
   :root[data-theme="dark"] .hero__text {
-    grid-column: 1 / 7;
+    grid-column: 1 / 6;
   }
 
-  :root[data-theme="dark"] .hero__scrim {
-    background: radial-gradient(ellipse 58% 75% at 20% 32%, color-mix(in srgb, var(--bg) 88%, transparent), transparent 72%);
+  /* on wide screens the text sits in open sky: no wash over the print */
+  .hero__scrim {
+    display: none;
   }
 }
 
@@ -38,11 +39,11 @@
   object-position: 60% 50%;
 }
 
-/* A soft wash of paper behind the text, so it reads over clouds and spray */
+/* Narrow screens only (responsive.css): a wash at the top, where the text
+   has to run across the print */
 .hero__scrim {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 60% 70% at 82% 30%, color-mix(in srgb, var(--bg) 72%, transparent), transparent 70%);
   pointer-events: none;
 }
 
@@ -53,14 +54,14 @@
   padding-block: clamp(2rem, 7vh, 5rem) clamp(2.5rem, 6vh, 5rem);
 }
 
-/* Set on the open sky, top right of the print */
+/* Set on the open sky, top right of the print, clear of the crest */
 .hero__text {
-  grid-column: 8 / -1;
+  grid-column: 9 / -1;
 }
 
 .hero__name {
   font-family: var(--serif);
-  font-size: clamp(3.5rem, 8vw, 7.5rem); /* 120px at desktop */
+  font-size: clamp(3rem, 6vw, 5.75rem);
   line-height: 0.94;
   letter-spacing: -0.025em;
 }

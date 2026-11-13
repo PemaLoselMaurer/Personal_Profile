@@ -9,11 +9,20 @@ html.motion [data-reveal] {
   visibility: hidden;
 }
 
+/* Safety net (layouts/Base.astro): the animation code is late, so show the
+   content as it is. */
+html.motion-timeout [data-reveal] {
+  visibility: visible;
+}
+
 /* ---- The 3D world (src/motion/world.ts) --------------------------------
-   Without it: the flat print in the hero, solid section backgrounds and no
-   passages. With it (html.has-world): the world is drawn behind everything,
-   sections become see-through (the world's veil keeps them legible) and the
-   passages open up between sections for the camera to travel. */
+   The print runs behind the whole page.
+   Without the world: the flat print in the hero, solid sections and the
+   flat print in each story passage.
+   With it (html.has-world, set once its first frame is drawn): the flat
+   print fades out over the live world; sections become a see-through veil
+   of their own colour so the print shows through while the text stays
+   readable; passages show the print fully. */
 
 .world {
   position: fixed;
@@ -35,34 +44,66 @@ html.motion [data-reveal] {
   z-index: 1;
 }
 
-/* The world reveals the print itself (dither dissolve from paper), so the
-   flat copy stays hidden while it loads, unless the world gives up. */
-html.motion:not(.world-failed) .hero__print {
-  visibility: hidden;
+/* The flat print shows straight away and fades out once the world has drawn
+   its first frame underneath; it comes back if the world goes away. */
+.hero__print {
+  transition: opacity 0.9s ease;
 }
 
 html.has-world .hero__print {
-  display: none;
+  opacity: 0;
 }
 
-html.has-world .hero,
-html.has-world .section,
-html.has-world .footer {
+html.has-world .hero {
   background: transparent;
 }
 
-/* a full screen of open print for each line of the story */
-html.has-world .passage {
+/* The reading veil. --veil is how much of the section colour covers the
+   print. Either the art is fully there (hero, passages) or it is a faint
+   presence behind calm text: nothing in between, which only reads as mud. */
+html.has-world .section,
+html.has-world .footer {
+  --veil: 95%;
+  background: color-mix(in srgb, var(--bg) var(--veil), transparent);
+}
+
+html.has-world .section[data-tone="night"],
+html.has-world .footer {
+  --veil: 93%;
+}
+
+/* the densest text on the page */
+html.has-world .section--skills {
+  --veil: 97%;
+}
+
+/* A full screen of the print for each line of the story. The height is
+   set whenever motion is on (not only once the world arrives), so nothing
+   shifts when it does; until then, or without WebGL, the flat print fills
+   the passage. */
+html.motion .passage {
   display: grid;
   align-items: start;
   min-height: 100vh;
-  padding-block: 24vh 0; /* the line sits on the sky, above the scene's subject */
+  /* the line sits in the print's open sky: on the wave that is right of
+     the crest, above Fuji; on the fireworks it is the top left */
+  padding-block: 30vh 0;
   background: transparent;
 }
 
-html.has-world .passage__inner::before {
-  opacity: 1;
+:root[data-theme="dark"].motion .passage {
+  padding-top: 14vh;
 }
+
+/* until the world arrives (or without WebGL): the flat print */
+html.motion:not(.has-world) .passage {
+  background: var(--bg) var(--print-light) center / cover no-repeat;
+}
+
+:root[data-theme="dark"].motion:not(.has-world) .passage {
+  background-image: var(--print-dark);
+}
+
 
 /* ---- Other motion --------------------------------------------------------- */
 

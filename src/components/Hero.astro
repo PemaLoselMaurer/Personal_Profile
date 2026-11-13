@@ -7,32 +7,41 @@ import Button from "./Button.astro";
 import { asset } from "../lib/paths";
 import { content } from "../data/content";
 const { hero, art, artDark } = content;
-const srcset = (p: string) => `${asset(p.replace("-2000", "-1000"))} 1000w, ${asset(p)} 2000w`;
+const small = (p: string) => asset(p.replace("-2000", "-1000"));
+const srcset = (p: string) => `${small(p)} 1000w, ${asset(p)} 2000w`;
 ---
 
-<section class="hero" id="top" data-tone="day" data-shot="home" aria-labelledby="hero-name">
-  <!-- the flat prints, one per theme; hidden while the 3D world draws them -->
-  <img
-    class="hero__print for-light"
-    src={asset(art.print)}
-    srcset={srcset(art.print)}
-    sizes="(max-aspect-ratio: 3/2) 150vh, 100vw"
-    alt={art.alt}
-    width="2000"
-    height="1344"
-    decoding="async"
-  />
-  <img
-    class="hero__print for-dark"
-    src={asset(artDark.print)}
-    srcset={srcset(artDark.print)}
-    sizes="(max-aspect-ratio: 3/2) 150vh, 100vw"
-    alt={artDark.alt}
-    width="2000"
-    height="1303"
-    loading="lazy"
-    decoding="async"
-  />
+<section class="hero" id="top" data-tone="day" aria-labelledby="hero-name">
+  <!--
+    The flat prints, one per theme. With motion on they are placeholders until
+    the 3D world draws over them, so they use the small file (the same one the
+    story passages use: one download). With reduced motion they are the final
+    image, so the sharp one.
+  -->
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset={srcset(art.print)} sizes="(max-aspect-ratio: 3/2) 150vh, 100vw" />
+    <img
+      class="hero__print for-light"
+      src={small(art.print)}
+      alt={art.alt}
+      width="2000"
+      height="1344"
+      fetchpriority="high"
+      decoding="async"
+    />
+  </picture>
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset={srcset(artDark.print)} sizes="(max-aspect-ratio: 3/2) 150vh, 100vw" />
+    <img
+      class="hero__print for-dark"
+      src={small(artDark.print)}
+      alt={artDark.alt}
+      width="2000"
+      height="1303"
+      loading="lazy"
+      decoding="async"
+    />
+  </picture>
   <div class="hero__scrim" aria-hidden="true"></div>
   <div class="wrap grid hero__body">
     <div class="hero__text">

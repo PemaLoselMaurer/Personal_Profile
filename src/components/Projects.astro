@@ -3,11 +3,9 @@ import Section from "./Section.astro";
 import ProjectCard from "./ProjectCard.astro";
 import { content } from "../data/content";
 const { projects } = content;
-// one boat of the print per card, panning left to right (shots in src/motion/world.ts)
-const boats = ["boatLeft", "boatCentre", "boatRight"];
 ---
 
-<Section id="projects" tone="night" veil={0.7}>
+<Section id="projects" tone="night">
   <div class="projects">
     {
       projects.groups.map((group) => (
@@ -16,13 +14,12 @@ const boats = ["boatLeft", "boatCentre", "boatRight"];
             {group.name}
           </h3>
           <div class="cards">
-            {group.items.map((project, i) => (
+            {group.items.map((project) => (
               <ProjectCard
                 project={project}
                 placeholder={projects.placeholder}
                 linkLabels={projects.linkLabels}
                 hoverLabel={projects.hoverLabel}
-                shot={boats[i % boats.length]}
               />
             ))}
           </div>

@@ -46,7 +46,7 @@
 [data-tone="night"] {
   --bg: var(--blue);
   --fg: #dedad1;
-  --muted: rgba(222, 218, 209, 0.72);
+  --muted: rgba(222, 218, 209, 0.8);
   --rule: rgba(222, 218, 209, 0.2);
   --pill-bg: #dedad1;
   --pill-fg: var(--blue);
@@ -63,10 +63,11 @@
   color-scheme: dark;
 }
 
-/* dark / night */
+/* dark / night: the same deep page as dark / day. A second, slightly
+   lighter blue only looked like a mistake. */
 :root[data-theme="dark"] .on-blue,
 :root[data-theme="dark"] [data-tone="night"] {
-  --bg: var(--blue);
+  --bg: var(--deep);
   --fg: #c6c2b9;
   --muted: rgba(198, 194, 185, 0.7);
   --rule: rgba(198, 194, 185, 0.18);

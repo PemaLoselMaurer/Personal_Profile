@@ -242,16 +242,17 @@ const P = {
   const rgba = (buf) => sharp(buf, { raw: { width: W, height: H, channels: 4 } });
   const rgb = (buf) => sharp(buf, { raw: { width: W, height: H, channels: 3 } });
   const outputs = {
-    sky: [rgb(skyBuf), { quality: 70 }],
-    print: [rgb(print), { quality: 74 }],
-    back: [rgba(back), { quality: 74, alphaQuality: 85 }],
-    front: [rgba(front), { quality: 76, alphaQuality: 88 }],
-    fuji: [rgba(fuji).extract({ left: 0, top: 0, width: W, height: H }), { quality: 78, alphaQuality: 88 }]
+    // tuned by eye for a soft woodblock print on screen; lower costs grain
+    sky: [rgb(skyBuf), { quality: 58 }],
+    print: [rgb(print), { quality: 64 }],
+    back: [rgba(back), { quality: 62, alphaQuality: 72 }],
+    front: [rgba(front), { quality: 64, alphaQuality: 76 }],
+    fuji: [rgba(fuji).extract({ left: 0, top: 0, width: W, height: H }), { quality: 66, alphaQuality: 76 }]
   };
   for (const [name, [img, opts]] of Object.entries(outputs)) {
     for (const size of SIZES) {
       const file = path.join(outDir, `${name}-${size}.webp`);
-      await img.clone().resize({ width: size }).webp(opts).toFile(file);
+      await img.clone().resize({ width: size }).webp({ ...opts, effort: 6, smartSubsample: true }).toFile(file);
       console.log(path.basename(file), Math.round(fs.statSync(file).size / 1024) + " KB");
     }
   }

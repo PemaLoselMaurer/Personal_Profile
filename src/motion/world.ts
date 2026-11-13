@@ -4,26 +4,30 @@
 //   light theme  Hokusai, "Under the Wave off Kanagawa"    (scripts/cut-layers.cjs)
 //   dark theme   Kiyochika, "Fireworks at Ikenohata"        (scripts/cut-fireworks.cjs)
 //
-// Scrolling moves one camera through the world and tells its story alongside
-// the page (the lines between sections are content.story / storyDark):
+// The print runs behind the whole page. Sections sit on a see-through veil of
+// their own colour (styles/motion.css) so the text stays readable; the hero
+// and three passages between sections, each carrying one line of the story
+// (content.story / storyDark), show it fully. In each passage the camera
+// travels from one shot to the next as you scroll through it, and holds
+// there through the sections that follow:
 //
-//   section      wave (light)                     fireworks (dark)
-//   hero         the whole print                  the whole print
-//   about        the wave rising                  the fireworks falling
-//   education /  the crew bracing inside          the climber in the tree,
-//   experience   the great wave                   hanging the lanterns
-//   skills       pull back to the whole wave      pull back to the whole night
-//   projects     one boat per project card        one lantern per project card
-//   contact      Fuji, under the stars            the crowd, looking up
+//   moment                       wave (light)             fireworks (dark)
+//   hero                         the whole print          the whole print
+//   after About                  crest → the crew         fireworks → the climber
+//   before Projects              left → right boat        left → right lantern
+//   before Contact               wide → Fuji at night     wide → the crowd
 //
 // Shots stay wide (about 1.5× at most) so the print never goes soft, and
 // every frame is clamped inside the print's edges.
 //
-// While a section is read, a veil in the section's colour is drawn over the
-// world so the text stays legible; in the passages between sections it lifts
-// and the camera travels. On load, and when the theme changes, the print
-// appears through an ordered-dither dissolve. At night the fireworks sparkle,
-// the lanterns flicker and now and then a new burst lights the sky.
+// Loading: the flat print shows in the hero straight away; the world fades
+// in over it whenever its textures arrive. Only the current theme's print
+// loads up front; the other loads when the theme is switched, or in the
+// background on fast connections. If the WebGL context is lost, the world
+// removes itself and the flat print comes back.
+//
+// Switching theme dithers one print into the other. At night the fireworks
+// sparkle, the lanterns flicker and now and then a new burst lights the sky.
 import { Renderer, Camera, Transform, Plane, Program, Mesh, Texture } from "ogl";
 
 // ---- shared scale --------------------------------------------------------------
@@ -157,8 +161,6 @@ const NIGHT: World = (() => {
   };
 })();
 
-/** Veil strength while a section is read. */
-const VEIL = { day: 0.86, night: 0.8 };
 
 const CREAM = [0xf4 / 255, 0xf1 / 255, 0xea / 255];
 const DEEP = [0x0f / 255, 0x19 / 255, 0x2e / 255]; // dark-theme page
@@ -194,8 +196,6 @@ const fragment = /* glsl */ `
   uniform vec3 uPaper;
   uniform float uNight;
   uniform float uMoon;        // brightness of moonlit highlights
-  uniform float uVeil;
-  uniform vec3 uVeilColor;
   uniform float uReveal;
   uniform float uFlash;       // a new firework burst, 0..1
   uniform float uFlashGain;   // how much this layer lights up
@@ -262,7 +262,6 @@ const fragment = /* glsl */ `
     // a new burst lights the night
     col = mix(col, vec3(1.0, 0.86, 0.66), clamp(uFlash * uFlashGain, 0.0, 1.0));
 
-    col = mix(col, uVeilColor, uVeil);
     gl_FragColor = vec4(col, c.a);
   }
 `;
@@ -308,47 +307,57 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return img.decode().then(() => img);
 }
 
+/**
+ * Texture width for this screen. Must match the <link rel="preload">
+ * imagesrcset/imagesizes in layouts/Base.astro so the preloaded file is the
+ * one used: 1000w when the image needs at most 1000 device pixels.
+ */
+export function textureSize(): 1000 | 2000 {
+  const cssWidth = window.innerWidth <= 600 ? window.innerWidth * 0.34 : window.innerWidth;
+  return cssWidth * (window.devicePixelRatio || 1) > 1000 ? 2000 : 1000;
+}
+
 interface Built {
   world: World;
   scene: Transform;
   /** Per-world uniforms (shared by its layers). */
   u: { uReveal: { value: number }; uNight: { value: number }; uFlash: { value: number }; uFlicker: { value: number }; uPaper: { value: number[] } };
   keys: Key[];
+  /** When it became ready (ms); the first world needs no dither-in. */
+  arrived: number;
 }
 
-export async function initWorld(base: string): Promise<void> {
+export async function initWorld(base: string, onReady?: () => void): Promise<void> {
   const host = document.querySelector<HTMLElement>(".world");
   if (!host) return;
   const root = document.documentElement;
 
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const size = window.innerWidth * dpr > 1300 ? 2000 : 1000;
+  const size = textureSize();
   const fetchWorld = (w: World) =>
     Promise.all(w.layers.map((l) => loadImage(`${base}/${l.file.replace("{size}", String(size))}`)));
 
   const renderer = new Renderer({ dpr, alpha: false, antialias: true, powerPreference: "high-performance" });
   const gl = renderer.gl;
   if (!gl) throw new Error("WebGL unavailable");
+  const canvas = gl.canvas as HTMLCanvasElement;
 
   const camera = new Camera(gl, { fov: 30, near: 0.1, far: 100 });
 
   const shared = {
     uMoon: { value: 0.6 },
-    uVeil: { value: 0 },
-    uVeilColor: { value: [...CREAM] },
     uDpr: { value: dpr },
     uTime: { value: 0 },
     uBlue: { value: BLUE },
     uCream: { value: CREAM }
   };
 
-  // framing and scroll tracks (filled in by resize() / buildTracks() below)
+  // framing (filled in by resize())
   let homeX = 0;
   let tanY = 0.27;
   let tanX = 0.43;
-  let veilKeys: Key[] = [];
 
-  function build(world: World, images: HTMLImageElement[]): Built {
+  function build(world: World, images: HTMLImageElement[], arrived: number): Built {
     const scene = new Transform();
     const u = { uReveal: { value: 0 }, uNight: { value: 0 }, uFlash: { value: 0 }, uFlicker: { value: 0 }, uPaper: { value: world.paper } };
     const H = PRINT_W / world.aspect;
@@ -383,26 +392,36 @@ export async function initWorld(base: string): Promise<void> {
       mesh.position.z = layer.z;
       mesh.setParent(scene);
     });
-    return { world, scene, u, keys: [] };
+    return { world, scene, u, keys: [], arrived };
   }
 
-  // The current theme's world loads first; the other follows when idle, or
-  // at once if the theme is switched before then.
+  // ---- loading: this theme's print now, the other on demand -----------------
   const worlds: { wave: Built | null; night: Built | null } = { wave: null, night: null };
   const loading: Partial<Record<"wave" | "night", Promise<void>>> = {};
+  let firstDone = false;
   const ensure = (name: "wave" | "night") =>
     (loading[name] ??= fetchWorld(name === "wave" ? WAVE : NIGHT).then((images) => {
-      worlds[name] = build(name === "wave" ? WAVE : NIGHT, images);
+      worlds[name] = build(name === "wave" ? WAVE : NIGHT, images, firstDone ? performance.now() : -Infinity);
+      firstDone = true;
       buildTracks();
     }));
-  const first = root.dataset.theme === "dark" ? "night" : "wave";
+  const current = () => (root.dataset.theme === "dark" ? "night" : "wave");
+  const first = current();
   const second = first === "wave" ? "night" : "wave";
   await ensure(first);
-  host.appendChild(gl.canvas as HTMLCanvasElement);
-  const later = () => ensure(second).catch((e) => console.warn("Second world unavailable.", e));
-  if ("requestIdleCallback" in window) requestIdleCallback(later, { timeout: 5000 });
-  else setTimeout(later, 3000);
-  new MutationObserver(later).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+  host.appendChild(canvas);
+  // the other theme's print: when the theme is switched…
+  new MutationObserver(() => ensure(current()).catch((e) => console.warn("[motion] second print unavailable", e))).observe(root, {
+    attributes: true,
+    attributeFilter: ["data-theme"]
+  });
+  // …or quietly in the background on a fast connection
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  if (!conn || (!conn.saveData && conn.effectiveType === "4g")) {
+    const prefetch = () => setTimeout(() => ensure(second).catch(() => {}), 4000);
+    if (document.readyState === "complete") prefetch();
+    else window.addEventListener("load", prefetch, { once: true });
+  }
 
   // ---- framing: the home shot covers the viewport, like object-fit: cover ----
 
@@ -434,6 +453,9 @@ export async function initWorld(base: string): Promise<void> {
     const w = window.innerWidth;
     const h = window.innerHeight;
     renderer.setSize(w, h);
+    // CSS decides the canvas's size; never a stale pixel size
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
     const aspect = w / h;
     const printH = PRINT_W / WAVE.aspect;
     const visibleH = aspect > WAVE.aspect ? PRINT_W / aspect : printH;
@@ -447,7 +469,9 @@ export async function initWorld(base: string): Promise<void> {
     buildTracks();
   };
 
-  // ---- tracks: shots and veil keyed to where sections sit on the page ----
+  // ---- tracks: the camera's path, keyed to where the passages sit -----------
+  // Home while the hero is on screen; in each passage, from its data-shot-from
+  // as it enters the screen to its data-shot as it leaves.
   function buildTracks() {
     const vh = window.innerHeight;
     const top = (el: Element) => el.getBoundingClientRect().top + window.scrollY;
@@ -458,37 +482,17 @@ export async function initWorld(base: string): Promise<void> {
       home[3] += homeX;
       b.keys = [{ y: 0, value: home }];
     }
-    veilKeys = [{ y: 0, value: [0, 0] }]; // [strength, tone 0 day … 1 night]
-
-    const hold = (el: HTMLElement, from: number, to: number) => {
-      const start = top(el);
-      const holdFrom = start - vh * from;
-      const holdTo = Math.max(holdFrom, start + el.offsetHeight - vh * to);
-      for (const b of built) {
-        const shot = b.world.shots[el.dataset.shot ?? ""];
-        if (shot) b.keys.push({ y: holdFrom, value: shotValue(shot) }, { y: holdTo, value: shotValue(shot) });
-      }
-    };
-
-    document.querySelectorAll<HTMLElement>("main > section, main > [data-passage]").forEach((el) => {
+    document.querySelectorAll<HTMLElement>("[data-passage]").forEach((el) => {
       const start = top(el);
       const end = start + el.offsetHeight;
-      if (el.hasAttribute("data-passage")) {
-        // the veil lifts in the middle of a passage, while the camera travels
-        veilKeys.push({ y: start + el.offsetHeight / 2 - vh / 2, value: [0, el.dataset.tone === "night" ? 1 : 0] });
-        return;
+      for (const b of built) {
+        const from = b.world.shots[el.dataset.shotFrom ?? ""];
+        const to = b.world.shots[el.dataset.shot ?? ""];
+        if (from) b.keys.push({ y: start - vh, value: shotValue(from) });
+        if (to) b.keys.push({ y: end, value: shotValue(to) });
       }
-      const tone = el.dataset.tone === "night" ? 1 : 0;
-      const veil = el.dataset.veil ? Number(el.dataset.veil) : tone ? VEIL.night : VEIL.day;
-      veilKeys.push({ y: start - vh * 0.5, value: [veil, tone] }, { y: Math.max(start - vh * 0.5, end - vh * 0.5), value: [veil, tone] });
-      // the section's own shot, held while it fills the screen…
-      if (el.dataset.shot) hold(el, 0.35, 0.65);
-      // …or one shot per child that has one (project cards), held while
-      // that child is in the middle of the screen
-      el.querySelectorAll<HTMLElement>("[data-shot]").forEach((child) => hold(child, 0.6, 0.4));
     });
     for (const b of built) b.keys.sort((a, b2) => a.y - b2.y);
-    veilKeys.sort((a, b) => a.y - b.y);
   }
 
   resize();
@@ -508,12 +512,28 @@ export async function initWorld(base: string): Promise<void> {
   // ---- loop ----
   let dark = root.dataset.theme === "dark" ? 1 : 0;
   const start = performance.now();
-  const revealMs = 1800;
   let nextBurst = 2 + Math.random() * 3; // seconds
   let burstAt = -10;
-  root.classList.add("has-world");
+  let running = true;
+  let drawn = false;
+
+  // A lost context would leave a black screen: step aside for the flat print.
+  canvas.addEventListener("webglcontextlost", (event) => {
+    event.preventDefault();
+    running = false;
+    root.classList.remove("has-world");
+    canvas.remove();
+    console.warn("[motion] WebGL context lost: showing the flat print instead");
+  });
+
+  /** Dither-in for a print that arrives after the first (theme switch). */
+  const arrival = (b: Built, now: number) => {
+    const r = Math.min(1, (now - b.arrived) / 900);
+    return 1 - Math.pow(1 - r, 3);
+  };
 
   const frame = (now: number) => {
+    if (!running) return;
     requestAnimationFrame(frame);
     const t = (now - start) / 1000;
     const y = window.scrollY;
@@ -537,29 +557,24 @@ export async function initWorld(base: string): Promise<void> {
     camera.position.set(pos[0], pos[1], pos[2]);
     camera.lookAt([look[0], look[1], look[2]]);
 
-    // shared grade
-    const [veil, tone] = sample(veilKeys, y);
-    const intro = 1 - Math.pow(1 - Math.min(1, (now - start) / revealMs), 3);
     const page = CREAM.map((c, k) => c + (DEEP[k] - c) * dark);
     gl.clearColor(page[0], page[1], page[2], 1);
     shared.uTime.value = t;
-    shared.uVeil.value = veil;
     shared.uMoon.value = 0.6 - 0.26 * dark; // dimmer moonlight in the dark theme
-    for (let k = 0; k < 3; k++) shared.uVeilColor.value[k] = page[k] + (BLUE[k] - page[k]) * tone;
 
-    // wave: underneath, fully revealed; moonlit when standing in for the night
+    // wave: underneath; moonlit when standing in for a night print not yet loaded
     let cleared = false;
     if (worlds.wave && w < 0.999) {
       const night = waveCam![6];
       worlds.wave.u.uNight.value = night + (Math.max(night, DARK_THEME_NIGHT) - night) * dark;
-      worlds.wave.u.uReveal.value = intro;
+      worlds.wave.u.uReveal.value = arrival(worlds.wave, now);
       renderer.render({ scene: worlds.wave.scene, camera, sort: false });
       cleared = true;
     }
 
     // night: dithers in over the wave as the theme turns dark
     if (worlds.night && w > 0.001) {
-      worlds.night.u.uReveal.value = Math.min(intro, w);
+      worlds.night.u.uReveal.value = Math.min(arrival(worlds.night, now), w);
       if (t > nextBurst) {
         burstAt = t;
         nextBurst = t + 4 + Math.random() * 6;
@@ -567,6 +582,13 @@ export async function initWorld(base: string): Promise<void> {
       worlds.night.u.uFlash.value = burstCurve(t - burstAt) * 0.45;
       worlds.night.u.uFlicker.value = Math.sin(t * 7.3) * 0.5 + Math.sin(t * 2.9 + 1.7) * 0.3 + Math.sin(t * 13.1) * 0.2;
       renderer.render({ scene: worlds.night.scene, camera, sort: false, clear: !cleared });
+    }
+
+    // the first real frame is on the canvas: now it can replace the flat print
+    if (!drawn) {
+      drawn = true;
+      root.classList.add("has-world");
+      onReady?.();
     }
   };
   requestAnimationFrame(frame);

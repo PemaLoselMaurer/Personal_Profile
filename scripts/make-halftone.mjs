@@ -1,40 +1,53 @@
-// Builds the static halftone portrait used when WebGL is unavailable or the
-// visitor prefers reduced motion: public/assets/profile-halftone.png
+// Prepares the About portrait:
+//   public/assets/profile.webp            the photo the shader draws (src/motion/halftone.ts)
+//   public/assets/profile-halftone.png   the static halftone, shown without WebGL,
+//                                         with reduced motion, or until the shader runs
 //
-// It uses the same recipe as the shader in src/motion/halftone.ts (45° dot
-// grid, cream dots on Prussian blue, dot area follows brightness), so the
-// fallback and the live effect look the same.
+// The static version uses the same recipe as the shader (45° dot grid, cream
+// dots on Prussian blue, dot area follows brightness), so the two match.
 //
-// Run after changing the portrait:  npm run halftone
+// To change the photo:  npm run halftone -- path/to/photo.jpg
+// (a clear, front-facing photo, face in the upper half, works best).
+// Without an argument it rebuilds from the current public/assets/profile.webp.
 import sharp from "sharp";
 import { fileURLToPath } from "node:url";
 
 const root = new URL("../public/assets/", import.meta.url);
-const SOURCE = fileURLToPath(new URL("profile-pic.png", root));
+const PHOTO = fileURLToPath(new URL("profile.webp", root));
 const OUT = fileURLToPath(new URL("profile-halftone.png", root));
+const source = process.argv[2] ?? PHOTO;
 
-const W = 960; // 4:5, matches the hero frame
+// 1. the photo for the shader: 1200px wide is plenty for the frame's size
+if (process.argv[2]) {
+  await sharp(source).rotate().resize({ width: 1200, withoutEnlargement: true }).webp({ quality: 82 }).toFile(PHOTO);
+  console.log("wrote", PHOTO);
+}
+
+// 2. the static halftone
+const W = 960; // 4:5, matches the frame
 const H = 1200;
-const CELL = 11; // px between dots
+const CELL = 7; // px between dots (~137 across, like the shader's 150)
 // Framing and tone. Keep in sync with PORTRAIT in src/motion/halftone.ts
-const ZOOM = 1.5; // crop in past cover-fit
+const ZOOM = 1.15; // crop in past cover-fit
 const FOCUS_X = 0.47; // point of the photo kept at the centre of the frame
-const FOCUS_Y = 0.6;
-const GAMMA = 1.35; // >1 darkens mid-tones so the busy background recedes
-const VIGNETTE = 0.45; // how much the edges fade towards blue
+const FOCUS_Y = 0.55;
+const GAMMA = 1.25; // >1 darkens mid-tones so a busy background recedes
+const VIGNETTE = 0.35; // how much the edges fade towards blue
 const BLUE = [0x1b, 0x2f, 0x5c];
 const CREAM = [0xf4, 0xf1, 0xea];
 
-const { data: src, info } = await sharp(SOURCE)
-  .ensureAlpha()
-  .raw()
-  .toBuffer({ resolveWithObject: true });
+const { data: src, info } = await sharp(PHOTO).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
-// cover-fit the portrait into W×H, horizontally centred on FOCUS_X
+// cover-fit the portrait into W×H, centred on FOCUS
 const scale = Math.max(W / info.width, H / info.height) * ZOOM;
 const clampOff = (v, size, frame) => Math.min(0, Math.max(frame - size, v));
 const offX = clampOff(W / 2 - FOCUS_X * info.width * scale, info.width * scale, W);
 const offY = clampOff(H / 2 - FOCUS_Y * info.height * scale, info.height * scale, H);
+
+function smoothstep(a, b, x) {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
 
 function brightness(x, y) {
   const sx = Math.round((x - offX) / scale);
@@ -46,11 +59,6 @@ function brightness(x, y) {
   const v = Math.hypot(x / W - 0.5, (y / H - 0.5) * 0.9) * 2; // 0 centre → ~1 corners
   const fade = 1 - VIGNETTE * smoothstep(0.35, 1.05, v);
   return Math.pow(smoothstep(0.06, 0.94, lum), GAMMA) * a * fade;
-}
-
-function smoothstep(a, b, x) {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
 }
 
 const C = Math.SQRT1_2;
@@ -65,7 +73,7 @@ for (let y = 0; y < H; y++) {
     // back to image space for the dot's centre
     const px = C * cx + C * cy;
     const py = -C * cx + C * cy;
-    const radius = CELL * 0.5 * 1.1 * Math.sqrt(brightness(px, py));
+    const radius = CELL * 0.55 * Math.sqrt(brightness(px, py));
     const d = Math.hypot(rx - cx, ry - cy);
     const cover = Math.min(1, Math.max(0, radius - d + 0.5)); // 1px anti-aliasing
     const o = (y * W + x) * 3;
@@ -73,7 +81,6 @@ for (let y = 0; y < H; y++) {
   }
 }
 
-await sharp(out, { raw: { width: W, height: H, channels: 3 } })
-  .png({ palette: true, colors: 32, compressionLevel: 9 })
-  .toFile(OUT);
+// two inks plus their anti-aliased edge: a 4-colour palette keeps it small
+await sharp(out, { raw: { width: W, height: H, channels: 3 } }).png({ palette: true, colors: 4, compressionLevel: 9, effort: 10 }).toFile(OUT);
 console.log("wrote", OUT);

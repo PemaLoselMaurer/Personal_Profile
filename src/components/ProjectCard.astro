@@ -11,17 +11,15 @@ interface Props {
   placeholder: string;
   linkLabels: { live: string; code: string };
   hoverLabel: string;
-  /** Camera shot of the 3D world while this card is read. */
-  shot?: string;
 }
 
-const { project, placeholder, linkLabels, hoverLabel, shot } = Astro.props;
+const { project, placeholder, linkLabels, hoverLabel } = Astro.props;
 const kinds = (["live", "code"] as const).filter((k) => project.links[k]);
 const primary = kinds[0] ? project.links[kinds[0]] : "";
 const ext = (href: string) => (isExternal(href) ? { target: "_blank", rel: "noopener" } : {});
 ---
 
-<article class:list={["card", primary && "card--linked"]} data-hover-label={primary ? hoverLabel : undefined} data-shot={shot}>
+<article class:list={["card", primary && "card--linked"]} data-hover-label={primary ? hoverLabel : undefined}>
   <div class="card__media" data-reveal="image">
     {
       project.image ? (

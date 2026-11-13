@@ -17,6 +17,12 @@ interface Props {
 }
 const { title, description } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+// Layers of each theme's print (keep in step with WAVE / NIGHT in src/motion/world.ts)
+const worldLayers: [string, string[]][] = [
+  ["(prefers-color-scheme: light) and (prefers-reduced-motion: no-preference)", ["assets/wave/sky", "assets/wave/fuji", "assets/wave/back", "assets/wave/front"]],
+  ["(prefers-color-scheme: dark) and (prefers-reduced-motion: no-preference)", ["assets/night/night-back", "assets/night/night-fireworks", "assets/night/night-lanterns", "assets/night/night-crowd"]]
+];
 ---
 
 <!doctype html>
@@ -31,11 +37,6 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
 
-    <!--
-      Animation is opt-in. "motion" hides what GSAP is about to reveal
-      (styles/motion.css). If the animation code never arrives, the class is
-      removed again so the page is still complete.
-    -->
     <!--
       Theme before first paint: a saved choice wins, otherwise the system
       setting. src/motion/theme.ts handles the toggle afterwards.
@@ -52,16 +53,45 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         document.documentElement.dataset.theme = theme;
       })();
     </script>
+    <!--
+      Animation is opt-in. "motion" hides what GSAP is about to reveal
+      (styles/motion.css). Safety net: if the entrance animations haven't
+      started after 4s (slow network), "motion-timeout" shows the content as
+      it is. "motion" stays, so the 3D world and other effects still start
+      whenever their code arrives.
+    -->
     <script is:inline>
       (function () {
         var root = document.documentElement;
         if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         root.classList.add("motion");
         setTimeout(function () {
-          if (!window.__motionReady) root.classList.remove("motion");
+          if (!window.__motionReady) root.classList.add("motion-timeout");
         }, 4000);
       })();
     </script>
+
+    <!--
+      The hero's print layers, fetched with the page rather than after the
+      script asks for them. Only the set for the system theme is fetched, and
+      none with reduced motion (no 3D world then); the
+      sizes match textureSize() in src/motion/world.ts. Module preloads for
+      the animation code are added at build time (astro.config.mjs).
+    -->
+    {
+      worldLayers.map(([media, files]) =>
+        files.map((file) => (
+          <link
+            rel="preload"
+            as="image"
+            type="image/webp"
+            media={media}
+            imagesrcset={`${base}/${file}-1000.webp 1000w, ${base}/${file}-2000.webp 2000w`}
+            imagesizes="(max-width: 600px) 34vw, 100vw"
+          />
+        ))
+      )
+    }
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>

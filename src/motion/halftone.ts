@@ -5,15 +5,16 @@
 //             from coarse to fine.
 //   lens      a soft circle under the cursor shows the clean photo.
 //
-// The pre-rendered fallback <img> stays underneath; if anything here fails,
-// the page simply keeps it.
+// The pre-rendered fallback <img> stays underneath and the canvas is
+// transparent until it has drawn, so a slow, failed or lost WebGL context
+// always leaves the static halftone showing, never a black box.
 import { Renderer, Program, Mesh, Triangle, Texture } from "ogl";
 import gsap from "gsap";
 
 /** Framing and tone of the portrait. Keep in sync with scripts/make-halftone.mjs. */
-export const PORTRAIT = { zoom: 1.5, focus: [0.47, 0.6], gamma: 1.35, vignette: 0.45 };
-/** Dots across the frame once resolved (the fallback PNG has ~87). */
-const DOTS_ACROSS = 86;
+export const PORTRAIT = { zoom: 1.15, focus: [0.47, 0.55], gamma: 1.25, vignette: 0.35 };
+/** Dots across the frame once resolved (the fallback PNG has ~137). */
+const DOTS_ACROSS = 150;
 
 const BLUE = [0x1b / 255, 0x2f / 255, 0x5c / 255];
 const CREAM = [0xf4 / 255, 0xf1 / 255, 0xea / 255];
@@ -107,19 +108,20 @@ export async function initHalftone(): Promise<void> {
   const figure = document.querySelector<HTMLElement>("[data-halftone]");
   if (!figure?.dataset.src) return;
 
-  // wait until the portrait is about to scroll into view
+  // wait until the portrait is actually on screen, so its photo never
+  // competes with the hero for bandwidth
   await new Promise<void>((resolve) => {
     const io = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return;
       io.disconnect();
       resolve();
-    }, { rootMargin: "200px 0px" });
+    });
     io.observe(figure);
   });
   const portraitImg = await loadImage(figure.dataset.src);
 
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const renderer = new Renderer({ dpr, alpha: false, antialias: false, powerPreference: "low-power" });
+  const renderer = new Renderer({ dpr, alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: "low-power" });
   const gl = renderer.gl;
   if (!gl) throw new Error("WebGL unavailable");
 
@@ -161,6 +163,16 @@ export async function initHalftone(): Promise<void> {
   canvas.style.opacity = "0";
   figure.appendChild(canvas);
 
+  // a lost context (common with software renderers) would show as a black
+  // box: remove the canvas and let the static halftone show
+  let lost = false;
+  canvas.addEventListener("webglcontextlost", (event) => {
+    event.preventDefault();
+    lost = true;
+    canvas.remove();
+    console.warn("[motion] portrait shader lost its WebGL context, showing the static halftone");
+  });
+
   // ---- render on demand ---------------------------------------------------
   let dirty = true;
   let visible = true;
@@ -168,7 +180,7 @@ export async function initHalftone(): Promise<void> {
     dirty = true;
   };
   gsap.ticker.add(() => {
-    if (!dirty || !visible) return;
+    if (lost || !dirty || !visible) return;
     dirty = false;
     renderer.render({ scene: mesh });
   });
@@ -183,12 +195,15 @@ export async function initHalftone(): Promise<void> {
     const { width, height } = figure.getBoundingClientRect();
     if (!width || !height) return;
     renderer.setSize(width, height);
+    // the frame decides the canvas size (OGL writes fixed pixels otherwise)
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
     const W = width * dpr;
     const H = height * dpr;
     u.uRes.value = [W, H];
     u.uPortraitXf.value = placement(W, H, portraitImg, PORTRAIT.zoom, PORTRAIT.focus);
     u.uLensRadius.value = Math.max(90, width * 0.24);
-    state.fine = Math.max(4.5, width / DOTS_ACROSS);
+    state.fine = Math.max(3, width / DOTS_ACROSS);
     if (state.settled) u.uCell.value = state.fine;
     invalidate();
   };
@@ -199,7 +214,7 @@ export async function initHalftone(): Promise<void> {
   gsap.to(canvas, { opacity: 1, duration: 0.5, ease: "power1.out" });
   gsap.fromTo(
     state,
-    { cell: Math.max(28, state.fine * 4.5) },
+    { cell: Math.max(22, state.fine * 6) },
     {
       cell: () => state.fine,
       duration: 1.9,

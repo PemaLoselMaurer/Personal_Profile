@@ -8,6 +8,9 @@
 //   night-crowd      the crowd in silhouette along the bottom
 //   night-print      all of it flattened: the fallback image without WebGL
 //
+// Every layer is colour-graded to sit with the site: the grey-green darks
+// are tinted toward Prussian blue, and the fireworks and lanterns are lifted.
+//
 // Source (public domain, The Met Open Access, object 712976):
 //   https://www.metmuseum.org/art/collection/search/712976
 // Usage:
@@ -85,6 +88,22 @@ const P = {
   }
   const fireworksM = await sharp(fwRaw, { raw: { width: W, height: H, channels: 1 } }).median(3).erode(4) /* sharp: erode grows white */.blur(1.5).extractChannel(0).raw().toBuffer();
 
+  // ---- grade (after the masks, which are found on the original tones) -------
+  const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  for (let i = 0; i < N; i++) {
+    const c = [data[i * 3] / 255, data[i * 3 + 1] / 255, data[i * 3 + 2] / 255];
+    const l = 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+    const shadow = (1 - smooth(0.1, 0.55, l)) * 0.65; // how far toward Prussian
+    const light = smooth(0.35, 0.75, l); // fireworks, lanterns, reflections
+    const tint = [0.75, 0.95, 1.45]; // Prussian, relative to grey
+    for (let k = 0; k < 3; k++) {
+      let v = c[k] + (l * tint[k] - c[k]) * shadow;
+      v = l + (v - l) * (1 + 0.35 * light); // richer colour in the lights
+      v *= 1 + 0.12 * light; // and a little brighter
+      data[i * 3 + k] = Math.max(0, Math.min(255, Math.round(v * 255)));
+    }
+  }
+
   // ---- back: everything cut out is painted over with its surroundings ----------
   const cutAll = Buffer.alloc(N);
   for (let i = 0; i < N; i++) cutAll[i] = Math.max(lanternM[i], crowdM[i], fireworksM[i]);
@@ -130,16 +149,17 @@ const P = {
   // ---- write --------------------------------------------------------------
   fs.mkdirSync(outDir, { recursive: true });
   const outputs = {
-    "night-back": [sharp(back, { raw: { width: W, height: H, channels: 3 } }), { quality: 72 }],
-    "night-fireworks": [layer(fireworksM), { quality: 80, alphaQuality: 90 }],
-    "night-lanterns": [layer(lanternM), { quality: 80, alphaQuality: 90 }],
-    "night-crowd": [layer(crowdM), { quality: 72, alphaQuality: 85 }],
-    "night-print": [sharp(source).extract(P.crop).removeAlpha(), { quality: 74 }]
+    // tuned by eye: the dark ground hides compression; the sparks need a bit more
+    "night-back": [sharp(back, { raw: { width: W, height: H, channels: 3 } }), { quality: 58 }],
+    "night-fireworks": [layer(fireworksM), { quality: 70, alphaQuality: 80 }],
+    "night-lanterns": [layer(lanternM), { quality: 70, alphaQuality: 80 }],
+    "night-crowd": [layer(crowdM), { quality: 58, alphaQuality: 72 }],
+    "night-print": [sharp(Buffer.from(data), { raw: { width: W, height: H, channels: 3 } }), { quality: 64 }]
   };
   for (const [name, [img, opts]] of Object.entries(outputs)) {
     for (const size of P.sizes) {
       const file = path.join(outDir, `${name}-${size}.webp`);
-      await img.clone().resize({ width: size }).webp(opts).toFile(file);
+      await img.clone().resize({ width: size }).webp({ ...opts, effort: 6, smartSubsample: true }).toFile(file);
       console.log(path.basename(file), Math.round(fs.statSync(file).size / 1024) + " KB");
     }
   }

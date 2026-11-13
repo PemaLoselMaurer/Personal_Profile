@@ -1,36 +1,27 @@
 ---
-// A page section on the 12-column grid: a 1px rule, a small numbered label
-// in the left columns, and the content beside it.
+// A page section on the 12-column grid: a 1px rule, a numbered serif title
+// in the left columns (it stays in view while the section scrolls), and the
+// content beside it. On its own colour: solid
+// without the 3D world, a see-through veil over it with (styles/motion.css).
 //
-//   tone  "day" (ink on cream) or "night" (cream on Prussian). Without the 3D
-//         world this is the section's solid background; with it, it picks
-//         the colour of the veil drawn over the world while you read.
-//   shot  where the camera of the 3D world sits while this section is read
-//         (names in src/motion/world.ts).
+//   tone  "day" (ink on cream) or "night" (cream on Prussian).
 import { sectionLabel } from "../data/content";
 
 interface Props {
   id: string;
   tone?: "day" | "night";
-  /** Omit when children carry their own shots (the project cards). */
-  shot?: string;
-  /** Veil strength over the world while read (0–1). Lower shows more of the print. */
-  veil?: number;
   class?: string;
 }
-const { id, tone = "day", shot, veil, class: className } = Astro.props;
+const { id, tone = "day", class: className } = Astro.props;
+const { num, title } = sectionLabel(id);
 ---
 
-<section
-  id={id}
-  class:list={["section", `section--${id}`, className]}
-  data-tone={tone}
-  data-shot={shot}
-  data-veil={veil}
-  aria-labelledby={`${id}-label`}
->
+<section id={id} class:list={["section", `section--${id}`, className]} data-tone={tone} aria-labelledby={`${id}-label`}>
   <div class="wrap grid">
-    <h2 class="label" id={`${id}-label`} data-reveal="fade">{sectionLabel(id)}</h2>
+    <h2 class="label" id={`${id}-label`} data-reveal="fade">
+      <span class="label__num">{num}</span>
+      <span class="label__title">{title}</span>
+    </h2>
     <slot />
   </div>
 </section>

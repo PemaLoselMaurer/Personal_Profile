@@ -10,14 +10,16 @@
   letter-spacing: -0.012em;
 }
 
-/* Statement on the left, the halftone portrait beside it */
+/* Statement on the left, a large halftone portrait beside it */
 .section--about .statement {
-  grid-column: 4 / 9;
+  grid-column: 4 / 8;
 }
 
 .about__portrait {
-  grid-column: 10 / -1;
+  grid-column: 8 / -1;
   align-self: start;
+  width: min(100%, 34rem);
+  justify-self: end;
 }
 
 /* ---- Story lines between sections ------------------------------------- */
@@ -29,20 +31,16 @@
   color: var(--fg);
 }
 
+/* each line sits in its print's open sky: upper right of the wave, upper
+   left of the fireworks (the art carries the centre) */
 .passage__inner {
   position: relative;
   display: grid;
-  justify-items: center;
+  justify-items: end;
 }
 
-/* soft wash of the section colour behind the line, so it reads over the print */
-.passage__inner::before {
-  content: "";
-  position: absolute;
-  inset: -70% 4%;
-  background: radial-gradient(closest-side, var(--bg) 35%, transparent);
-  opacity: 0;
-  pointer-events: none;
+:root[data-theme="dark"] .passage__inner {
+  justify-items: start;
 }
 
 .passage__lines {
@@ -52,18 +50,48 @@
 .passage__lines > * {
   grid-area: 1 / 1;
   display: grid;
-  justify-items: center;
+  justify-items: end;
+}
+
+.passage__lines > .for-dark {
+  justify-items: start;
 }
 
 .passage__line {
   position: relative;
-  max-width: 16em;
+  max-width: 12em;
   font-family: var(--serif);
-  font-size: clamp(2rem, 4.6vw, 4rem);
+  font-size: clamp(1.75rem, 3.4vw, 3.25rem);
   font-style: italic;
   line-height: 1.1;
   letter-spacing: -0.015em;
-  text-align: center;
+  text-align: right;
+  /* a halo that hugs the letters, so the line reads over the print
+     without covering it */
+  text-shadow:
+    0 0 0.08em var(--bg),
+    0 0 0.2em var(--bg),
+    0 0 0.45em var(--bg),
+    0 0 1em color-mix(in srgb, var(--bg) 80%, transparent);
+}
+
+.for-dark > .passage__line {
+  text-align: left;
+}
+
+/* phones: no room beside the art, so lines centre over it */
+@media (max-width: 600px) {
+  .passage__inner,
+  :root[data-theme="dark"] .passage__inner,
+  .passage__lines > *,
+  .passage__lines > .for-dark {
+    justify-items: center;
+  }
+
+  .passage__line,
+  .for-dark > .passage__line {
+    text-align: center;
+  }
 }
 
 /* ---- Education and Experience ------------------------------------------ */
@@ -116,16 +144,18 @@
 }
 
 .skill-group__name {
-  font-size: 0.9375rem;
-  font-weight: 500;
-  line-height: 1.9;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.8;
 }
 
+/* full text colour, not muted: lists are read item by item */
 .skill-group__items {
   columns: 2;
   column-gap: var(--gutter);
-  color: var(--muted);
-  line-height: 1.9;
+  color: var(--fg);
+  font-size: 1.0625rem;
+  line-height: 1.8;
 }
 
 .skill-group__items li {
@@ -133,6 +163,11 @@
 }
 
 /* ---- Projects ---------------------------------------------------------- */
+
+/* the one full-width section: its title stays put above the cards */
+.section--projects .label {
+  position: static;
+}
 
 .projects {
   grid-column: 1 / -1;
@@ -153,37 +188,27 @@
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(4rem, 8vw, 7rem) var(--gutter);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(3rem, 6vw, 4rem) var(--gutter);
   align-items: start;
-}
-
-/* Asymmetric editorial rhythm: large left, smaller right set lower,
-   then a mid-width card in from the left */
-.card:nth-child(3n + 1) {
-  grid-column: 1 / 8;
-}
-
-.card:nth-child(3n + 2) {
-  grid-column: 9 / -1;
-  margin-top: clamp(6rem, 14vw, 12rem);
-}
-
-.card:nth-child(3n + 3) {
-  grid-column: 3 / 9;
 }
 
 .card {
   position: relative;
 }
 
+/* every screenshot the same shape, in the same thin frame */
 .card__media {
   aspect-ratio: 4 / 3;
   overflow: hidden;
+  padding: 0.5rem;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
 }
 
-.card:nth-child(3n + 2) .card__media {
-  aspect-ratio: 4 / 5;
+.card__media img,
+.card__placeholder {
+  display: block;
 }
 
 .card__media img,
@@ -219,7 +244,7 @@
 
 .card__title {
   font-family: var(--serif);
-  font-size: clamp(1.875rem, 3vw, 2.625rem);
+  font-size: clamp(1.75rem, 2.4vw, 2.25rem);
   line-height: 1.1;
 }
 
@@ -377,16 +402,19 @@
   min-width: 0;
 }
 
+/* hidden until the key is clicked, then it scrambles into view */
 .cipher {
   min-width: 0;
-  color: var(--muted);
+  color: var(--fg);
   font-size: 0.8125rem;
   text-align: right;
   overflow-wrap: anywhere;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
 }
 
 .cipher.is-open {
-  color: var(--fg);
+  opacity: 1;
 }
 
 .key {

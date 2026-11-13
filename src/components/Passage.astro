@@ -1,10 +1,13 @@
 ---
-// A line of the story between sections (content.story, and content.storyDark
-// for the dark theme's print). Both versions are in the page; the theme
-// shows one. With the 3D world the passage is a full screen of open print:
-// the veil lifts, the camera travels and the line is set over it. Without the
-// world it is simply a quiet line between sections.
+// One of the big art moments between sections, with a line of the story
+// (content.story, and content.storyDark for the dark theme's print). Both
+// lines are in the page; the theme shows one. With the 3D world the passage
+// is a full screen of the print, and the camera travels from `shotFrom` to
+// `shot` as it scrolls past (names in src/motion/world.ts). Without the world
+// it is simply a quiet line between sections.
 import RevealText from "./RevealText.astro";
+import { asset } from "../lib/paths";
+import { content } from "../data/content";
 
 interface Props {
   text: string;
@@ -12,11 +15,16 @@ interface Props {
   textDark?: string;
   /** Tone of the section that follows: colours the line and the nav. */
   tone?: "day" | "night";
+  /** Camera shots at the start and end of the passage. */
+  shotFrom: string;
+  shot: string;
 }
-const { text, textDark, tone = "day" } = Astro.props;
+const { text, textDark, tone = "day", shotFrom, shot } = Astro.props;
+// the flat prints, shown here until the 3D world takes over (styles/motion.css)
+const prints = `--print-light: url("${asset(content.art.print.replace("-2000", "-1000"))}"); --print-dark: url("${asset(content.artDark.print.replace("-2000", "-1000"))}")`;
 ---
 
-<div class="passage" data-passage data-tone={tone}>
+<div class="passage" data-passage data-tone={tone} data-shot-from={shotFrom} data-shot={shot} style={prints}>
   <div class="wrap passage__inner">
     <div class="passage__lines">
       <div class="for-light">

@@ -20,14 +20,13 @@ import { content } from "../data/content";
   <Hero />
   <main id="main" tabindex="-1">
     <About />
-    <Passage text={content.story.toEducation} textDark={content.storyDark.toEducation} />
+    <Passage text={content.story.toEducation} textDark={content.storyDark.toEducation} shotFrom="wave" shot="crew" />
     <Education />
     <Experience />
-    <Passage text={content.story.toSkills} textDark={content.storyDark.toSkills} />
     <Skills />
-    <Passage text={content.story.toProjects} textDark={content.storyDark.toProjects} tone="night" />
+    <Passage text={content.story.toProjects} textDark={content.storyDark.toProjects} tone="night" shotFrom="boatLeft" shot="boatRight" />
     <Projects />
-    <Passage text={content.story.toContact} textDark={content.storyDark.toContact} tone="night" />
+    <Passage text={content.story.toContact} textDark={content.storyDark.toContact} tone="night" shotFrom="wave" shot="fuji" />
     <Contact />
   </main>
   <Footer />

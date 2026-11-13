@@ -90,7 +90,6 @@ export const content = {
    */
   story: {
     toEducation: "Every crew starts by learning to row.",
-    toSkills: "Then you learn the water: what holds, and what breaks.",
     toProjects: "Three boats in the print. Three sites, built for real clients.",
     toContact: "Through all of it, the mountain stays put."
   },
@@ -98,7 +97,6 @@ export const content = {
   /** The same story, told over the fireworks print in the dark theme. */
   storyDark: {
     toEducation: "Every festival starts with someone up a tree, hanging the lanterns.",
-    toSkills: "Then you learn the craft: what catches, and what fizzles.",
     toProjects: "Lanterns on the line. Three sites, built for real clients.",
     toContact: "Then everyone looks up."
   },
@@ -106,8 +104,8 @@ export const content = {
   about: {
     heading: "About",
     portrait: {
-      src: "assets/profile-pic.png",
-      /** Static halftone, shown without WebGL. Rebuild with `npm run halftone`. */
+      src: "assets/profile.webp",
+      /** Static halftone, shown without WebGL. To change the photo: `npm run halftone -- path/to/photo.jpg`. */
       halftone: "assets/profile-halftone.png",
       alt: "Pema Losel Maurer photographing the viewer with a compact camera, in front of a waterfall"
     },
@@ -182,7 +180,6 @@ export const content = {
             stack: "Next.js, Tailwind, Netlify",
             year: "",
             blurb: "Organic herbal teas from Bhutan's first herbal tea farm, in Bumthang.",
-            /* phone-width screenshot: this card's frame is portrait */
             image: "assets/projects/bhutan-herbal-tea.webp",
             links: { live: "https://bhutanherbaltea.netlify.app/", code: "" }
           },
@@ -232,8 +229,8 @@ export const sections = [
   { id: "contact", label: content.contact.heading }
 ];
 
-/** "01 — About" style label for a section id. */
-export function sectionLabel(id: string): string {
+/** Number ("01") and title ("About") of a section, for its heading. */
+export function sectionLabel(id: string): { num: string; title: string } {
   const index = sections.findIndex((s) => s.id === id);
-  return `${String(index + 1).padStart(2, "0")} — ${sections[index]?.label ?? id}`;
+  return { num: String(index + 1).padStart(2, "0"), title: sections[index]?.label ?? id };
 }
