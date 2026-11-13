@@ -1,0 +1,29 @@
+---
+import Section from "./Section.astro";
+import RevealText from "./RevealText.astro";
+import { content } from "../data/content";
+import { isExternal } from "../lib/paths";
+const { contact } = content;
+---
+
+<Section id="contact" tone="night" shot="fuji" veil={0.7}>
+  <RevealText tag="p" class="contact__headline">{contact.headline}</RevealText>
+  <dl class="contact">
+    {
+      contact.links.map((link) => (
+        <div class="contact__row" data-reveal="fade">
+          <dt>{link.label}</dt>
+          <dd>
+            <a
+              href={link.href}
+              target={isExternal(link.href) ? "_blank" : undefined}
+              rel={isExternal(link.href) ? "noopener" : undefined}
+            >
+              {link.text}
+            </a>
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+</Section>

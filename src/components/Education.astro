@@ -1,0 +1,9 @@
+---
+import Section from "./Section.astro";
+import Entries from "./Entries.astro";
+import { content } from "../data/content";
+---
+
+<Section id="education" tone="day" shot="crew">
+  <Entries items={content.education.items} />
+</Section>

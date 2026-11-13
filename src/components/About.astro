@@ -1,0 +1,17 @@
+---
+import Section from "./Section.astro";
+import RevealText from "./RevealText.astro";
+import HalftoneImage from "./HalftoneImage.astro";
+import { content } from "../data/content";
+const { about } = content;
+---
+
+<Section id="about" tone="day" shot="crest">
+  <RevealText tag="p" class="statement">{about.statement}</RevealText>
+  <HalftoneImage
+    class="about__portrait"
+    src={about.portrait.src}
+    fallback={about.portrait.halftone}
+    alt={about.portrait.alt}
+  />
+</Section>

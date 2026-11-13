@@ -1,0 +1,34 @@
+---
+import Section from "./Section.astro";
+import ProjectCard from "./ProjectCard.astro";
+import { content } from "../data/content";
+const { projects } = content;
+// one boat of the print per card, panning left to right (shots in src/motion/world.ts)
+const boats = ["boatLeft", "boatCentre", "boatRight"];
+---
+
+<Section id="projects" tone="night" veil={0.7}>
+  <div class="projects">
+    {
+      projects.groups.map((group) => (
+        <div class="project-group">
+          <h3 class="project-group__name" data-reveal="fade">
+            {group.name}
+          </h3>
+          <div class="cards">
+            {group.items.map((project, i) => (
+              <ProjectCard
+                project={project}
+                placeholder={projects.placeholder}
+                linkLabels={projects.linkLabels}
+                hoverLabel={projects.hoverLabel}
+                shot={boats[i % boats.length]}
+              />
+            ))}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+  <div class="cursor-label" aria-hidden="true">{projects.hoverLabel}</div>
+</Section>

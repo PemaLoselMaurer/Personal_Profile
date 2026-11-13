@@ -1,0 +1,29 @@
+---
+// Footer with the easter egg: a small key that decrypts a hidden line
+// (src/motion/easterEgg.ts, GSAP ScrambleText).
+import { content } from "../data/content";
+import { rot13 } from "../lib/cipher";
+const { secret, art, artDark, artSource } = content;
+const colophon = content.colophon.replace("{year}", String(new Date().getFullYear()));
+---
+
+<footer class="footer" data-tone="night">
+  <div class="wrap ruled footer__inner">
+    <div class="footer__colophon">
+      <p>{colophon}</p>
+      <p class="footer__credit">Artwork: {art.credit}; {artDark.credit}. {artSource}</p>
+    </div>
+    <div class="egg">
+      <p class="cipher" id="cipher" data-plain={secret.text}>
+        <span class="cipher__ink" aria-hidden="true">{rot13(secret.text)}</span>
+        <span class="sr-only" aria-live="polite"></span>
+      </p>
+      <button class="key" type="button" id="egg-key" aria-pressed="false" aria-label={secret.buttonLabel}>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="7.5" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+          <path d="M11.5 12H21M17.5 12v3.5M20.5 12v2.5" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</footer>

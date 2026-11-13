@@ -1,0 +1,56 @@
+/* Layout: page width, the 12-column grid, sections and their labels. */
+
+.wrap {
+  width: 100%;
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-inline: var(--margin);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+
+/* Section content sits in columns 4–12 unless it says otherwise.
+   :where() keeps this at zero specificity so any class can override it. */
+:where(.section .grid > *) {
+  grid-column: 4 / -1;
+}
+
+.section {
+  position: relative;
+  padding-block: clamp(4.5rem, 10vw, 9rem);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* Adjacent sections of the same tone share one rhythm: no double padding */
+.section[data-tone="day"] + .section[data-tone="day"],
+.section[data-tone="night"] + .section[data-tone="night"] {
+  padding-top: 0;
+}
+
+/* 1px rule across the top, kept inside the page margins */
+.section .grid,
+.ruled {
+  background: linear-gradient(var(--rule), var(--rule)) top center / calc(100% - 2 * var(--margin)) 1px no-repeat;
+}
+
+.section .grid {
+  row-gap: 0;
+  padding-top: 1.25rem;
+}
+
+/* "01 — About" */
+.label {
+  grid-column: 1 / 4;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}

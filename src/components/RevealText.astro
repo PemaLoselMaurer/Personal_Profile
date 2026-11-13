@@ -1,0 +1,15 @@
+---
+// Headline that reveals line by line, each line sliding up from behind a
+// mask (src/motion/reveal.ts, GSAP SplitText). Without motion it is plain text.
+interface Props {
+  tag?: "h1" | "h2" | "h3" | "p";
+  class?: string;
+  id?: string;
+  /** "scroll" waits until the text enters the viewport; "load" plays at once. */
+  trigger?: "scroll" | "load";
+}
+
+const { tag: Tag = "h2", class: className, id, trigger = "scroll" } = Astro.props;
+---
+
+<Tag id={id} class={className} data-reveal="lines" data-reveal-trigger={trigger}><slot /></Tag>

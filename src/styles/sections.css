@@ -1,0 +1,415 @@
+/* Section content: About, Education/Experience, Skills, Projects, Contact, footer. */
+
+/* ---- About ------------------------------------------------------------- */
+
+.statement {
+  max-width: 18em;
+  font-family: var(--serif);
+  font-size: clamp(1.75rem, 3vw, 2.75rem);
+  line-height: 1.14;
+  letter-spacing: -0.012em;
+}
+
+/* Statement on the left, the halftone portrait beside it */
+.section--about .statement {
+  grid-column: 4 / 9;
+}
+
+.about__portrait {
+  grid-column: 10 / -1;
+  align-self: start;
+}
+
+/* ---- Story lines between sections ------------------------------------- */
+
+.passage {
+  position: relative;
+  padding-block: clamp(3rem, 8vw, 6rem);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.passage__inner {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
+/* soft wash of the section colour behind the line, so it reads over the print */
+.passage__inner::before {
+  content: "";
+  position: absolute;
+  inset: -70% 4%;
+  background: radial-gradient(closest-side, var(--bg) 35%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.passage__lines {
+  display: grid;
+}
+
+.passage__lines > * {
+  grid-area: 1 / 1;
+  display: grid;
+  justify-items: center;
+}
+
+.passage__line {
+  position: relative;
+  max-width: 16em;
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4.6vw, 4rem);
+  font-style: italic;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-align: center;
+}
+
+/* ---- Education and Experience ------------------------------------------ */
+
+.entry {
+  display: grid;
+  grid-template-columns: minmax(7rem, 2fr) 7fr;
+  gap: 0 var(--gutter);
+  padding-block: 1.75rem;
+  border-top: 1px solid var(--rule);
+}
+
+.entry:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.entry__years {
+  padding-top: 0.55rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.entry__title {
+  font-family: var(--serif);
+  font-size: clamp(1.75rem, 2.6vw, 2.25rem);
+  line-height: 1.15;
+}
+
+.entry__detail {
+  max-width: 36em;
+  margin-top: 0.4rem;
+  color: var(--muted);
+}
+
+/* ---- Skills ------------------------------------------------------------ */
+
+.skill-group {
+  display: grid;
+  grid-template-columns: minmax(9rem, 3fr) 6fr;
+  gap: 0.5rem var(--gutter);
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.skill-group:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.skill-group__name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.9;
+}
+
+.skill-group__items {
+  columns: 2;
+  column-gap: var(--gutter);
+  color: var(--muted);
+  line-height: 1.9;
+}
+
+.skill-group__items li {
+  break-inside: avoid;
+}
+
+/* ---- Projects ---------------------------------------------------------- */
+
+.projects {
+  grid-column: 1 / -1;
+  margin-top: clamp(3rem, 6vw, 5rem);
+}
+
+.project-group + .project-group {
+  margin-top: clamp(6rem, 12vw, 11rem);
+}
+
+.project-group__name {
+  padding-bottom: 1rem;
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(4rem, 8vw, 7rem) var(--gutter);
+  align-items: start;
+}
+
+/* Asymmetric editorial rhythm: large left, smaller right set lower,
+   then a mid-width card in from the left */
+.card:nth-child(3n + 1) {
+  grid-column: 1 / 8;
+}
+
+.card:nth-child(3n + 2) {
+  grid-column: 9 / -1;
+  margin-top: clamp(6rem, 14vw, 12rem);
+}
+
+.card:nth-child(3n + 3) {
+  grid-column: 3 / 9;
+}
+
+.card {
+  position: relative;
+}
+
+.card__media {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.card:nth-child(3n + 2) .card__media {
+  aspect-ratio: 4 / 5;
+}
+
+.card__media img,
+.card__placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center; /* site screenshots: keep the header in frame */
+  transition: transform 1.2s var(--ease-out);
+}
+
+.card__placeholder {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.card:hover .card__media img,
+.card:hover .card__placeholder {
+  transform: scale(1.03);
+}
+
+.card__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.card__title {
+  font-family: var(--serif);
+  font-size: clamp(1.875rem, 3vw, 2.625rem);
+  line-height: 1.1;
+}
+
+.card__link {
+  text-decoration: none;
+}
+
+/* The whole card is the link's hit area */
+.card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.card__link:focus-visible {
+  outline: none;
+}
+
+.card__link:focus-visible::after {
+  outline: 2px solid currentColor;
+  outline-offset: 0.75rem;
+}
+
+.card__year {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.card__stack {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.card__blurb {
+  max-width: 32em;
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+/* Links sit above the stretched card link */
+.card__links {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.9rem;
+}
+
+/* Cursor label for linked cards (fine pointers only, set up in projectHover.ts) */
+.cursor-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  display: none;
+  padding: 0.7em 1.15em;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.has-cursor-label .cursor-label {
+  display: block;
+}
+
+.has-cursor-label .card--linked {
+  cursor: none;
+}
+
+/* ---- Contact ----------------------------------------------------------- */
+
+.contact__headline {
+  font-family: var(--serif);
+  font-size: clamp(3.5rem, 8.4vw, 7.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.025em;
+}
+
+.contact {
+  margin-top: clamp(3rem, 6vw, 5rem);
+}
+
+.contact__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 2fr) 7fr;
+  align-items: baseline;
+  gap: 0 var(--gutter);
+  padding-block: 1.25rem;
+  border-top: 1px solid var(--rule);
+}
+
+.contact dt {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.contact dd {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.contact a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 0.18em;
+  transition: text-decoration-color 0.35s var(--ease-out);
+}
+
+.contact a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ---- Footer ------------------------------------------------------------ */
+
+.footer {
+  position: relative;
+  padding-bottom: 2.5rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  padding-top: 1.5rem;
+}
+
+.footer__colophon {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.footer__credit {
+  max-width: 40em;
+  margin-top: 0.25rem;
+}
+
+.egg {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.cipher {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.cipher.is-open {
+  color: var(--fg);
+}
+
+.key {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0.45rem;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  transition: border-color 0.3s var(--ease-out);
+}
+
+.key:hover,
+.key[aria-pressed="true"] {
+  border-color: var(--fg);
+}
+
+.key svg {
+  width: 100%;
+  height: 100%;
+}

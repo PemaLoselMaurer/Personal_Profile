@@ -1,0 +1,47 @@
+---
+// The hero: name and links set on the sky of the print. With WebGL the
+// print is the live 3D world behind the page (src/motion/world.ts); without
+// it, the flat print below is shown instead.
+import RevealText from "./RevealText.astro";
+import Button from "./Button.astro";
+import { asset } from "../lib/paths";
+import { content } from "../data/content";
+const { hero, art, artDark } = content;
+const srcset = (p: string) => `${asset(p.replace("-2000", "-1000"))} 1000w, ${asset(p)} 2000w`;
+---
+
+<section class="hero" id="top" data-tone="day" data-shot="home" aria-labelledby="hero-name">
+  <!-- the flat prints, one per theme; hidden while the 3D world draws them -->
+  <img
+    class="hero__print for-light"
+    src={asset(art.print)}
+    srcset={srcset(art.print)}
+    sizes="(max-aspect-ratio: 3/2) 150vh, 100vw"
+    alt={art.alt}
+    width="2000"
+    height="1344"
+    decoding="async"
+  />
+  <img
+    class="hero__print for-dark"
+    src={asset(artDark.print)}
+    srcset={srcset(artDark.print)}
+    sizes="(max-aspect-ratio: 3/2) 150vh, 100vw"
+    alt={artDark.alt}
+    width="2000"
+    height="1303"
+    loading="lazy"
+    decoding="async"
+  />
+  <div class="hero__scrim" aria-hidden="true"></div>
+  <div class="wrap grid hero__body">
+    <div class="hero__text">
+      <RevealText tag="h1" id="hero-name" class="hero__name" trigger="load">{hero.name}</RevealText>
+      <p class="hero__alias" data-reveal="fade" data-reveal-trigger="load">({hero.alias})</p>
+      <p class="hero__role" data-reveal="fade" data-reveal-trigger="load">{hero.role}</p>
+      <div class="hero__actions" data-reveal="fade" data-reveal-trigger="load">
+        {hero.buttons.map((b) => <Button {...b} />)}
+      </div>
+    </div>
+  </div>
+</section>

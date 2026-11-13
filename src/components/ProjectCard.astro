@@ -1,0 +1,65 @@
+---
+// Large editorial project card: image (or neutral placeholder frame),
+// title and year, stack, one-line description, links.
+// With a link, the whole card is clickable and src/motion/projectHover.ts
+// shows a "View" label at the cursor.
+import type { Project } from "../data/content";
+import { asset, isExternal } from "../lib/paths";
+
+interface Props {
+  project: Project;
+  placeholder: string;
+  linkLabels: { live: string; code: string };
+  hoverLabel: string;
+  /** Camera shot of the 3D world while this card is read. */
+  shot?: string;
+}
+
+const { project, placeholder, linkLabels, hoverLabel, shot } = Astro.props;
+const kinds = (["live", "code"] as const).filter((k) => project.links[k]);
+const primary = kinds[0] ? project.links[kinds[0]] : "";
+const ext = (href: string) => (isExternal(href) ? { target: "_blank", rel: "noopener" } : {});
+---
+
+<article class:list={["card", primary && "card--linked"]} data-hover-label={primary ? hoverLabel : undefined} data-shot={shot}>
+  <div class="card__media" data-reveal="image">
+    {
+      project.image ? (
+        <img src={asset(project.image)} alt="" loading="lazy" decoding="async" />
+      ) : (
+        <div class="card__placeholder">
+          <span>{placeholder}</span>
+        </div>
+      )
+    }
+  </div>
+  <div class="card__meta" data-reveal="fade">
+    <h4 class="card__title">
+      {
+        primary ? (
+          <a class="card__link" href={asset(primary)} {...ext(primary)}>
+            {project.title}
+          </a>
+        ) : (
+          project.title
+        )
+      }
+    </h4>
+    {project.year && <p class="card__year">{project.year}</p>}
+  </div>
+  <div data-reveal="fade">
+    {project.stack && <p class="card__stack">{project.stack}</p>}
+    <p class="card__blurb">{project.blurb}</p>
+    {
+      kinds.length > 1 && (
+        <p class="card__links">
+          {kinds.map((k) => (
+            <a class="textlink" href={asset(project.links[k])} {...ext(project.links[k])}>
+              {linkLabels[k]}
+            </a>
+          ))}
+        </p>
+      )
+    }
+  </div>
+</article>

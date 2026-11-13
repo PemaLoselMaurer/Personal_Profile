@@ -1,0 +1,24 @@
+---
+// The portrait as a monochrome halftone (cream dots on Prussian blue), drawn
+// live by a WebGL shader in src/motion/halftone.ts:
+//   - on load the dots resolve from coarse to fine
+//   - a soft lens under the cursor shows the clean photo
+//
+// The <img> is a pre-rendered halftone (npm run halftone). It is what
+// screen readers, reduced-motion visitors and browsers without WebGL get;
+// the canvas is layered over it only once WebGL is running.
+import { asset } from "../lib/paths";
+
+interface Props {
+  src: string;
+  fallback: string;
+  alt: string;
+  class?: string;
+}
+
+const { src, fallback, alt, class: className } = Astro.props;
+---
+
+<figure class:list={["halftone", className]} data-halftone data-src={asset(src)}>
+  <img class="halftone__fallback" src={asset(fallback)} alt={alt} width="960" height="1200" loading="lazy" decoding="async" />
+</figure>

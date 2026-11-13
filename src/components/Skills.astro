@@ -1,0 +1,22 @@
+---
+import Section from "./Section.astro";
+import { content } from "../data/content";
+const { skills } = content;
+---
+
+<Section id="skills" tone="night" shot="wave">
+  <div class="skills">
+    {
+      skills.groups.map((group) => (
+        <div class="skill-group" data-reveal="fade">
+          <h3 class="skill-group__name">{group.name}</h3>
+          <ul class="skill-group__items">
+            {group.items.map((skill) => (
+              <li>{skill}</li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+</Section>

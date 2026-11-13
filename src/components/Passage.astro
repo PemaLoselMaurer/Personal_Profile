@@ -1,0 +1,30 @@
+---
+// A line of the story between sections (content.story, and content.storyDark
+// for the dark theme's print). Both versions are in the page; the theme
+// shows one. With the 3D world the passage is a full screen of open print:
+// the veil lifts, the camera travels and the line is set over it. Without the
+// world it is simply a quiet line between sections.
+import RevealText from "./RevealText.astro";
+
+interface Props {
+  text: string;
+  /** The line in the dark theme; the light one is used if omitted. */
+  textDark?: string;
+  /** Tone of the section that follows: colours the line and the nav. */
+  tone?: "day" | "night";
+}
+const { text, textDark, tone = "day" } = Astro.props;
+---
+
+<div class="passage" data-passage data-tone={tone}>
+  <div class="wrap passage__inner">
+    <div class="passage__lines">
+      <div class="for-light">
+        <RevealText tag="p" class="passage__line">{text}</RevealText>
+      </div>
+      <div class="for-dark">
+        <RevealText tag="p" class="passage__line">{textDark ?? text}</RevealText>
+      </div>
+    </div>
+  </div>
+</div>

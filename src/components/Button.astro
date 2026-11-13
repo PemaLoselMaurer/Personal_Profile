@@ -1,0 +1,21 @@
+---
+// Pill button (primary) or underlined text link (secondary).
+import { asset, isExternal } from "../lib/paths";
+
+interface Props {
+  label: string;
+  href: string;
+  primary?: boolean;
+  newTab?: boolean;
+  class?: string;
+}
+const { label, href, primary = false, newTab = false, class: className } = Astro.props;
+const blank = newTab || isExternal(href);
+---
+
+<a
+  class:list={[primary ? "pill" : "textlink", className]}
+  href={asset(href)}
+  target={blank ? "_blank" : undefined}
+  rel={blank ? "noopener" : undefined}>{label}</a
+>

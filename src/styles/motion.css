@@ -1,0 +1,94 @@
+/* States that exist only while animating, and the 3D world's layout.
+
+   Everything else describes the finished, static page. <html> gets class
+   "motion" only when the visitor has not asked for reduced motion; these
+   rules hide what GSAP is about to reveal so nothing flashes before the code
+   arrives. GSAP reveals each element with autoAlpha (opacity + visibility). */
+
+html.motion [data-reveal] {
+  visibility: hidden;
+}
+
+/* ---- The 3D world (src/motion/world.ts) --------------------------------
+   Without it: the flat print in the hero, solid section backgrounds and no
+   passages. With it (html.has-world): the world is drawn behind everything,
+   sections become see-through (the world's veil keeps them legible) and the
+   passages open up between sections for the camera to travel. */
+
+.world {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.world canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero,
+#main,
+.footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* The world reveals the print itself (dither dissolve from paper), so the
+   flat copy stays hidden while it loads, unless the world gives up. */
+html.motion:not(.world-failed) .hero__print {
+  visibility: hidden;
+}
+
+html.has-world .hero__print {
+  display: none;
+}
+
+html.has-world .hero,
+html.has-world .section,
+html.has-world .footer {
+  background: transparent;
+}
+
+/* a full screen of open print for each line of the story */
+html.has-world .passage {
+  display: grid;
+  align-items: start;
+  min-height: 100vh;
+  padding-block: 24vh 0; /* the line sits on the sky, above the scene's subject */
+  background: transparent;
+}
+
+html.has-world .passage__inner::before {
+  opacity: 1;
+}
+
+/* ---- Other motion --------------------------------------------------------- */
+
+/* Hover zoom on project images is motion too */
+@media (prefers-reduced-motion: reduce) {
+  .card__media img,
+  .card__placeholder {
+    transition: none;
+  }
+
+  .card:hover .card__media img,
+  .card:hover .card__placeholder {
+    transform: none;
+  }
+}
+
+/* Lenis smooth scrolling */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}

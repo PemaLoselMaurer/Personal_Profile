@@ -1,0 +1,92 @@
+/* Fixed top bar. Transparent at the very top of the page; once scrolled it
+   takes the background of the section underneath (blue or cream, toggled by
+   src/motion/stickyNav.ts through the .on-blue context class) and a 1px rule. */
+
+.sitenav {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 15;
+  height: var(--nav-h);
+  color: var(--fg);
+  transition:
+    background-color 0.4s var(--ease-out),
+    color 0.4s var(--ease-out),
+    box-shadow 0.4s var(--ease-out);
+}
+
+.sitenav.is-scrolled {
+  background-color: var(--bg);
+  box-shadow: 0 1px 0 var(--rule);
+}
+
+.sitenav__inner {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  height: 100%;
+}
+
+.wordmark {
+  margin-right: auto;
+  font-family: var(--serif);
+  font-size: 1.625rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  gap: 1.75rem;
+  font-size: 0.875rem;
+}
+
+.nav a {
+  padding-block: 0.2em;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.3s var(--ease-out);
+}
+
+.nav a:hover,
+.nav a[aria-current] {
+  color: var(--fg);
+}
+
+/* Current section: a 1px underline */
+.nav a[aria-current] {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat;
+}
+
+/* Light / dark toggle: a moon in the light theme, a sun in the dark */
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  transition: border-color 0.3s var(--ease-out);
+}
+
+.theme-toggle:hover {
+  border-color: var(--fg);
+}
+
+.theme-toggle svg {
+  width: 100%;
+  height: 100%;
+}
+
+.theme-toggle__sun,
+:root[data-theme="dark"] .theme-toggle__moon {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle__sun {
+  display: block;
+}

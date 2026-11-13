@@ -1,0 +1,34 @@
+---
+import Base from "../layouts/Base.astro";
+import SiteNav from "../components/SiteNav.astro";
+import Hero from "../components/Hero.astro";
+import About from "../components/About.astro";
+import Education from "../components/Education.astro";
+import Experience from "../components/Experience.astro";
+import Skills from "../components/Skills.astro";
+import Projects from "../components/Projects.astro";
+import Contact from "../components/Contact.astro";
+import Footer from "../components/Footer.astro";
+import Passage from "../components/Passage.astro";
+import { content } from "../data/content";
+---
+
+<Base title={content.meta.title} description={content.meta.description}>
+  <!-- The 3D world (src/motion/world.ts) is drawn into this, behind the page -->
+  <div class="world" aria-hidden="true"></div>
+  <SiteNav />
+  <Hero />
+  <main id="main" tabindex="-1">
+    <About />
+    <Passage text={content.story.toEducation} textDark={content.storyDark.toEducation} />
+    <Education />
+    <Experience />
+    <Passage text={content.story.toSkills} textDark={content.storyDark.toSkills} />
+    <Skills />
+    <Passage text={content.story.toProjects} textDark={content.storyDark.toProjects} tone="night" />
+    <Projects />
+    <Passage text={content.story.toContact} textDark={content.storyDark.toContact} tone="night" />
+    <Contact />
+  </main>
+  <Footer />
+</Base>

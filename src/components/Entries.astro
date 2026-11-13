@@ -1,0 +1,23 @@
+---
+// Ruled list used by the Education and Experience sections.
+import type { Entry } from "../data/content";
+
+interface Props {
+  items: Entry[];
+}
+const { items } = Astro.props;
+---
+
+<ul class="entries">
+  {
+    items.map((item) => (
+      <li class="entry" data-reveal="fade">
+        <p class="entry__years">{item.years ?? ""}</p>
+        <div>
+          <h3 class="entry__title">{item.title}</h3>
+          <p class="entry__detail">{item.detail}</p>
+        </div>
+      </li>
+    ))
+  }
+</ul>

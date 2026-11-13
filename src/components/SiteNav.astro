@@ -1,0 +1,38 @@
+---
+// Fixed top bar: wordmark, section links, theme toggle, CV pill.
+// src/motion/stickyNav.ts switches it between the blue and cream palettes to
+// match the section underneath, and marks the current section.
+// src/motion/theme.ts runs the light/dark toggle.
+import Button from "./Button.astro";
+import { content, sections } from "../data/content";
+const { hero } = content;
+const cv = hero.buttons.find((b) => b.primary);
+---
+
+<header class="sitenav">
+  <div class="wrap sitenav__inner">
+    <a class="wordmark" href="#top">{hero.alias}</a>
+    <nav aria-label="Sections">
+      <ul class="nav">
+        {
+          sections.map((s) => (
+            <li>
+              <a href={`#${s.id}`}>{s.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <button class="theme-toggle" type="button" id="theme-toggle" aria-pressed="false" aria-label="Dark theme">
+      <!-- moon shows in light theme, sun in dark -->
+      <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path>
+      </svg>
+      <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+        <path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+    </button>
+    {cv && <Button label={cv.label} href={cv.href} newTab={cv.newTab} primary class="pill--small" />}
+  </div>
+</header>

@@ -1,0 +1,111 @@
+/* Hero: name and links set on the sky of the print. */
+
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  padding-top: var(--nav-h); /* room for the fixed nav */
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* The flat print. Hidden once the 3D world is drawing it (styles/motion.css). */
+.hero__print {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+
+/* dark theme: the fireworks print. The text moves to the left, over the
+   dark sky, leaving the fireworks clear on the right. */
+@media (min-width: 901px) {
+  :root[data-theme="dark"] .hero__text {
+    grid-column: 1 / 7;
+  }
+
+  :root[data-theme="dark"] .hero__scrim {
+    background: radial-gradient(ellipse 58% 75% at 20% 32%, color-mix(in srgb, var(--bg) 88%, transparent), transparent 72%);
+  }
+}
+
+:root[data-theme="dark"] .hero__print {
+  object-position: 60% 50%;
+}
+
+/* A soft wash of paper behind the text, so it reads over clouds and spray */
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 70% at 82% 30%, color-mix(in srgb, var(--bg) 72%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+.hero__body {
+  position: relative;
+  flex: 1;
+  align-content: start;
+  padding-block: clamp(2rem, 7vh, 5rem) clamp(2.5rem, 6vh, 5rem);
+}
+
+/* Set on the open sky, top right of the print */
+.hero__text {
+  grid-column: 8 / -1;
+}
+
+.hero__name {
+  font-family: var(--serif);
+  font-size: clamp(3.5rem, 8vw, 7.5rem); /* 120px at desktop */
+  line-height: 0.94;
+  letter-spacing: -0.025em;
+}
+
+.hero__alias {
+  margin-top: 0.75rem;
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-style: italic;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.hero__role {
+  max-width: 28em;
+  margin-top: 1.75rem;
+  font-size: 1.0625rem;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.75rem;
+  margin-top: 1.75rem;
+}
+
+/* ---- Halftone portrait (About) ----------------------------------------- */
+
+.halftone {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--blue);
+}
+
+.halftone__fallback,
+.halftone canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.halftone canvas {
+  display: block;
+}
